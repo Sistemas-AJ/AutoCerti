@@ -5,6 +5,7 @@ let fileNameCounts = {};
 
 let history = [];
 let historyIndex = -1;
+let savedHistoryIndex = -1; 
 let historyLock = false;
 
 function loadExcel(event) {
@@ -59,6 +60,10 @@ function loadTemplate(event) {
       const json = e.target.result;
       canvas.loadFromJSON(json, function() {
         canvas.renderAll();
+        history = [];
+        historyIndex = -1;
+        savedHistoryIndex = -1;
+
       });
     };
     reader.readAsText(file);
@@ -181,23 +186,7 @@ function dragElement(elmnt) {
   }
 }
 
-document.addEventListener('keydown', function(e) {
-  // Usamos e.key o e.keyCode para detectar la tecla "Delete" (tecla Supr)
-  if (e.key === 'Delete' || e.keyCode === 46) {
-    deleteSelected();
-  }
-  // Deshacer con CTRL+Z
-  if (e.ctrlKey && e.key === 'z') {
-    e.preventDefault();
-    undo();
-  }
 
-  // Rehacer con CTRL+Y
-  if (e.ctrlKey && e.key === 'y') {
-    e.preventDefault();
-    redo();
-  }
-});
 
 // Actualización de propiedades de texto a partir de los controles
 document.getElementById("text-align").addEventListener("change", function() {
@@ -589,6 +578,9 @@ function saveTemplate() {
     a.download = "plantilla.json";
     a.click();
     URL.revokeObjectURL(url);
+
+    savedHistoryIndex = historyIndex; // <-- AÑADE ESTA LÍNEA
+    console.log("Progreso guardado. El índice de guardado es:", savedHistoryIndex); // Opcional: para depuración
   }
 
 function generatePreview() {
@@ -722,6 +714,11 @@ canvas.on('render:after', function() {
         saveState();
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarAtajos(canvas, { undo, redo, deleteSelected, saveTemplate });
+});
+
 // Agregar listeners globales al canvas principal
 canvas.on('object:modified', debouncedGeneratePreview);
 canvas.on('object:added', debouncedGeneratePreview);
