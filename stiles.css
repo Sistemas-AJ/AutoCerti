@@ -1,0 +1,206 @@
+/* Fondo general con tonos pastel claros */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f4f8;  /* Azul muy suave */
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+
+.header{
+    display: flex;
+    align-items: center;
+    align-content: center;
+    gap: 20px;
+    justify-content: center;
+    margin: auto;
+    font-size: 20px;
+}
+  /* Contenedor principal con fondo blanco y bordes redondeados */
+  .container {
+    max-width: 1200px;
+    margin: 20px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    height: 1900px;
+  }
+  
+  /* Títulos principales */
+  h1 {
+    color: #555;
+    text-align: center;
+  }
+
+
+.controls button i,
+.custom-file-upload i {
+  margin-right: 8px;
+}
+
+
+  /* Controles generales: botones y menú desplegable en tonos pastel */
+  .controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .controls button,
+  .controls select {
+    background-color: #1c8af8;  /* Pastel azul */
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  .controls button:hover,
+  .controls select:hover {
+    background-color: #5ba4e5;
+    transform: translateY(-2px);
+  }
+  
+  /* Estilo para el menú desplegable de columnas */
+  #columns-menu {
+    background-color: #0d67c0;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #columns-menu:hover {
+    background-color: #278ee9;
+  }
+  
+  /* Contenedor del canvas de edición */
+  #canvas-container {
+    position: relative;
+    width: 1123px;
+    height: 794px;
+    margin: 20px auto;
+    border: 2px dashed #a0b7c2;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Área de progreso centrada */
+  #progress-container {
+    display: none;
+    margin: 20px auto;
+    text-align: center;
+    width: 80%;
+    max-width: 400px;
+  }
+  #progress-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  progress {
+    width: 100%;
+    height: 20px;
+  }
+  #progress-percent {
+    margin-top: 5px;
+  }
+  
+  /* Título de la vista previa: centrado y con espaciado */
+  #preview-title {
+    text-align: center;
+    margin: 20px 0;
+    color: #555;
+    font-size: 20px;
+  }
+  
+  /* Canvas de previsualización */
+  #preview-canvas {
+    border: dashed 2px #a0b7c2;
+    background-color: #ffffff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  /* ------------------- Barra de herramientas flotante ------------------- */
+ /* Floating Toolbar - Minimalista */
+#floating-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: #fff;             /* Fondo blanco limpio */
+    padding: 8px 12px;            /* Menos padding para un look más ligero */
+    border: 1px solid #e0e0e0;    /* Borde muy sutil */
+    border-radius: 4px;           /* Esquinas ligeramente redondeadas */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Sombra muy suave */
+    display: none;
+    text-align: left;
+    max-width: 250px;
+  }
+  
+  #floating-toolbar h3 {
+    margin: 0 0 8px;              /* Sin margen superior y poco inferior */
+    font-size: 14px;
+    color: #333;
+  }
+  
+  #floating-toolbar label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #555;
+  }
+  
+  #floating-toolbar input[type="number"],
+  #floating-toolbar select {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 4px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    outline: none;
+  }
+  
+  #floating-toolbar input[type="checkbox"] {
+    margin-right: 4px;
+  }
+  /* ---------------------------------------------------------------------- */
+  
+  /* Opcional: Estilos para inputs de archivo personalizados si los necesitas */
+  /* Ejemplo para el input de Excel (si ya lo arreglaste, no es necesario) */
+
+  .custom-file-upload {
+    display: inline-block;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #0d67c0;
+    color: #fff;
+    border-radius: 5px;
+    border: 1px solid #81c0ff;
+    transition: background-color 0.3s ease;
+    font-size: 16px;
+  }
+  .custom-file-upload:hover {
+    background-color: #5ba4e5;
+  }
+
+  
+  /* Encabezado para arrastrar la barra (draggable) */
+  .draggable-header {
+    cursor: move;
+    padding: 10px;
+    color: #fff;
+  }
+  

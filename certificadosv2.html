@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPAO-Certificados</title>
+  <!-- Librerías necesarias -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="stiles.css">
+  
+
+  
+
+  <!-- Usar la versión UMD de svg2pdf.js -->
+  
+  
+  <link rel="icon" type="image/png" href="LOGO.png">
+  <link rel="stylesheet" href="stiles.css">
+
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="logo.jpg" alt="">
+      <h1>Certificados - Universidad Privada Antenor Orrego</h1>
+    </div>
+    
+    <div class="controls"> 
+      <div>
+        <label for="input-excel" class="custom-file-upload">
+          <i class="fas fa-file-excel"></i> Cargar Excel
+        </label>
+        <!-- Se ha definido loadExcel para evitar el error de referencia -->
+        <input type="file" id="input-excel" accept=".xlsx" style="display:none" onchange="loadExcel(event)">
+      </div>
+      <div>
+        <label for="template-input" class="custom-file-upload">
+          <i class="fas fa-file-alt"></i> Cargar Plantilla
+        </label>
+        <input type="file" id="template-input" accept=".json" style="display:none" onchange="loadTemplate(event)">
+      </div>
+      <select id="columns-menu">
+        <option value="">Datos</option>
+      </select>
+      <button onclick="addText()">
+        <i class="fas fa-font"></i> Agregar Texto
+      </button>
+      <button onclick="triggerImageUpload()">
+        <i class="fas fa-image"></i> Agregar Imagen
+      </button>
+      <input type="file" id="input-image" accept="image/*" style="display: none;">
+      <button onclick="deleteSelected()">
+        <i class="fas fa-trash"></i> Eliminar
+      </button>
+      <button onclick="generatePreview()">
+        <i class="fas fa-eye"></i> Mostrar Vista Previa
+      </button>
+      <button onclick="generateCertificates()">
+        <i class="fas fa-file-pdf"></i> Generar Certificados
+      </button>
+      <button onclick="downloadAll()">
+        <i class="fas fa-download"></i> Descargar Todos (ZIP)
+      </button>
+      <div>
+        <button onclick="saveTemplate()">
+          <i class="fas fa-save"></i> Guardar Plantilla
+        </button>
+      </div>
+    </div>
+    <div id="progress-container">
+      <div id="progress-label"></div>
+      <progress id="progress-bar" value="0" max="100"></progress>
+      <div id="progress-percent">0%</div>
+    </div>
+    <!-- Contenedor del canvas -->
+    <div id="canvas-container">
+      <canvas id="canvas" width="1123" height="794"></canvas>
+
+<!-- Título o separador para la vista previa -->
+      <h3>Vista Previa del Certificado (Primera Fila)</h3>
+<!-- Canvas de vista previa -->
+      <canvas id="preview-canvas" width="1123" height="794" style="border: 1px solid #ccc;"></canvas>
+      <!-- Barra de herramientas flotante que se muestra al seleccionar un objeto -->
+      <div id="floating-toolbar">
+        <div id="floating-toolbar-header" class="draggable-header">
+          <h3>Barra de Herramientas</h3>
+        </div>
+        <div id="text-controls">
+          <h3>Texto</h3>
+          <label>
+            Justificación:
+            <select id="text-align">
+              <option value="left">Izquierda</option>
+              <option value="center">Centro</option>
+              <option value="right">Derecha</option>
+              <option value="justify">Justificado</option>
+            </select>
+          </label>
+          <label>
+            Color:
+            <input type="color" id="text-color" value="#000000">
+          </label>
+          <label>
+            Fuente:
+            <select id="font-family">
+              <option value="Arial">Arial</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Georgia">Georgia</option>
+            </select>
+          </label>
+          <label>
+            Tamaño:
+            <input type="number" id="font-size" value="30" min="5" max="100">
+          </label>
+          <label>
+            <input type="checkbox" id="text-bold"> Negrita
+          </label>
+          <label>
+            <input type="checkbox" id="text-italic"> Cursiva
+          </label>
+        </div>
+        <!-- Controles de capas para cualquier objeto -->
+        <div id="layer-controls" style="margin-top:10px;">
+          <h3>Capas</h3>
+          <button id="bring-to-front">Traer al frente</button>
+          <button id="send-to-back">Enviar al fondo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  
+-->
+  <script src="svg2pdf.umd.min.js"></script>
+  <script src="qr.js">
+    // Inicializamos el canvas principal
+  </script>
+  
+
+</body>
+</html>
