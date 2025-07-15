@@ -25,47 +25,75 @@
       <h1>Certificados - Universidad Privada Antenor Orrego</h1>
     </div>
     
-    <div class="controls"> 
-      <div>
-        <label for="input-excel" class="custom-file-upload">
-          <i class="fas fa-file-excel"></i> Cargar Excel
-        </label>
-        <!-- Se ha definido loadExcel para evitar el error de referencia -->
-        <input type="file" id="input-excel" accept=".xlsx" style="display:none" onchange="loadExcel(event)">
+    <div class="controls-wrapper">
+      <div class="dropdown">
+          <button class="dropdown-toggle"><i class="fas fa-folder-open"></i> Archivo</button>
+          <div class="dropdown-menu">
+              <a href="#" onclick="document.getElementById('input-excel').click(); return false;"><i class="fas fa-file-excel"></i> Cargar Excel</a>
+              <a href="#" onclick="document.getElementById('template-input').click(); return false;"><i class="fas fa-file-alt"></i> Cargar Plantilla</a>
+              <a href="#" onclick="saveTemplate(); return false;"><i class="fas fa-save"></i> Guardar Plantilla</a>
+          </div>
       </div>
-      <div>
-        <label for="template-input" class="custom-file-upload">
-          <i class="fas fa-file-alt"></i> Cargar Plantilla
-        </label>
-        <input type="file" id="template-input" accept=".json" style="display:none" onchange="loadTemplate(event)">
+
+      <div class="dropdown">
+          <button class="dropdown-toggle"><i class="fas fa-puzzle-piece"></i> Elementos</button>
+          <div class="dropdown-menu">
+              <a href="#" onclick="addText(); return false;"><i class="fas fa-font"></i> Agregar Texto</a>
+              <a href="#" onclick="addQrPlaceholder(); return false;"><i class="fas fa-qrcode"></i> Agregar QR</a>
+              <a href="#" onclick="triggerImageUpload(); return false;"><i class="fas fa-image"></i> Agregar Imagen</a>
+          </div>
       </div>
-      <select id="columns-menu">
-        <option value="">Datos</option>
-      </select>
-      <button onclick="addText()">
-        <i class="fas fa-font"></i> Agregar Texto
-      </button>
-      <button onclick="triggerImageUpload()">
-        <i class="fas fa-image"></i> Agregar Imagen
-      </button>
+
+      <div class="dropdown">
+          <button class="dropdown-toggle"><i class="fas fa-cogs"></i> Campos Dinámicos</button>
+          <div class="dropdown-menu wide-menu">
+              <div class="control-group">
+                  <label for="columns-menu">Insertar Placeholder:</label>
+                  <select id="columns-menu"><option value="">(seleccionar)</option></select>
+              </div>
+              <div class="control-group">
+                  <label for="filename-column-select">Columna para Nombre de Certificado:</label>
+                  <select id="filename-column-select"><option value="">Por defecto ('nombre')</option></select>
+              </div>
+              <div class="control-group">
+                  <label for="qr-column-select">Columna para QR:</label>
+                  <select id="qr-column-select"><option value="">Por defecto ('qr')</option></select>
+              </div>
+          </div>
+      </div>
+      
+      <div class="dropdown">
+          <button class="dropdown-toggle"><i class="fas fa-file-export"></i> Exportar</button>
+          <div class="dropdown-menu">
+              <a href="#" onclick="generateCertificates(); return false;"><i class="fas fa-file-pdf"></i> Generar Certificados (Excel)</a>
+              <a href="#" onclick="exportSinglePDF(); return false;"><i class="fas fa-file-export"></i> Exportar PDF Único</a>
+              <a href="#" onclick="downloadAll(); return false;"><i class="fas fa-download"></i> Descargar Todos (ZIP)</a>
+          </div>
+      </div>
+
+      <div class="direct-actions">
+          <button onclick="undo()" class="btn-action-secondary" title="Deshacer (Ctrl+Z)">
+              <i class="fas fa-undo"></i>
+          </button>
+          <button onclick="redo()" class="btn-action-secondary" title="Rehacer (Ctrl+Y)">
+              <i class="fas fa-redo"></i>
+          </button>
+
+          <button onclick="exportSinglePDF()" class="btn-save" title="Guardar como PDF Único">
+              <i class="fas fa-save"></i>
+          </button>
+
+          <button onclick="deleteSelected()" class="btn-delete" title="Eliminar (Supr)">
+              <i class="fas fa-trash"></i>
+          </button>
+          <button onclick="generatePreview()" class="btn-preview" title="Refrescar Vista Previa">
+              <i class="fas fa-eye"></i>
+          </button>
+      </div>
+
+      <input type="file" id="input-excel" accept=".xlsx" style="display:none" onchange="loadExcel(event)">
+      <input type="file" id="template-input" accept=".json" style="display:none" onchange="loadTemplate(event)">
       <input type="file" id="input-image" accept="image/*" style="display: none;">
-      <button onclick="deleteSelected()">
-        <i class="fas fa-trash"></i> Eliminar
-      </button>
-      <button onclick="generatePreview()">
-        <i class="fas fa-eye"></i> Mostrar Vista Previa
-      </button>
-      <button onclick="generateCertificates()">
-        <i class="fas fa-file-pdf"></i> Generar Certificados
-      </button>
-      <button onclick="downloadAll()">
-        <i class="fas fa-download"></i> Descargar Todos (ZIP)
-      </button>
-      <div>
-        <button onclick="saveTemplate()">
-          <i class="fas fa-save"></i> Guardar Plantilla
-        </button>
-      </div>
     </div>
     <div id="progress-container">
       <div id="progress-label"></div>
@@ -146,6 +174,7 @@
     // Inicializamos el canvas principal
   </script>
   <script src="atajos.js"></script>
+  <script src="diseño.js"></script>
   
 
 </body>

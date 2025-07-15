@@ -204,3 +204,186 @@ body {
     color: #fff;
   }
   
+.controls-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* Espacio entre los grupos de control */
+    background-color: #f0f4f8;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+    flex-wrap: wrap; /* Para que se ajuste en pantallas pequeñas */
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column; /* Pone la etiqueta encima del menú */
+    align-items: flex-start;
+}
+
+.control-group label {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.btn-generate {
+    background-color: #28a745; /* Verde */
+}
+
+.btn-download {
+    background-color: #007bff; /* Azul */
+}
+
+
+.controls-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #c8ddf3;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    background-color: #004fa3;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.dropdown-toggle:hover {
+    background-color: #0056b3;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    min-width: 220px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 100;
+    border-radius: 5px;
+    padding: 5px 0;
+}
+
+/* Menú especial para los selectores de columnas */
+.dropdown-menu.wide-menu {
+    min-width: 260px;
+    padding: 15px;
+}
+
+.dropdown-menu a {
+    color: black;
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f1f1f1;
+}
+
+/* Clase para mostrar el menú con JS */
+.dropdown-menu.show {
+    display: block;
+}
+
+.direct-actions {
+    margin-left: auto; /* Empuja los botones de la derecha al final */
+    display: flex;
+    gap: 10px;
+}
+
+.btn-preview {
+    background-color: #6c757d;
+}
+
+/* Estilos para los grupos de control dentro de un menú */
+.control-group {
+    margin-bottom: 10px;
+}
+.control-group label {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: #333;
+    display: block;
+}
+.control-group select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #ced4da; /* Un borde sutil y moderno */
+    border-radius: 5px;     /* Bordes redondeados consistentes */
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+    /* --- Customización para quitar el estilo por defecto del navegador --- */
+    -webkit-appearance: none; /* Para Chrome, Safari, etc. */
+    -moz-appearance: none;    /* Para Firefox */
+    appearance: none;         /* Estándar */
+
+    /* --- Flecha personalizada para el menú desplegable --- */
+    /* Usamos una imagen SVG para la flecha, lo que asegura que se vea nítida */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+/* Efecto visual cuando el menú está seleccionado (focus) */
+.control-group select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.direct-actions button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.direct-actions button:hover {
+    opacity: 0.85;
+}
+
+/* Color para el botón de Eliminar (rojo) */
+.btn-delete {
+    background-color: #014579;
+}
+
+/* Color para el botón de Vista Previa (gris oscuro) */
+.btn-preview {
+    background-color: #0075db;
+}
+
+/* Color para los botones secundarios (Deshacer/Rehacer) */
+.btn-action-secondary {
+    background-color: #014579;
+}
+
+/* Color para el botón de Guardar (verde) */
+.btn-save {
+    background-color: #014579;
+}

@@ -56,18 +56,28 @@ function loadTemplate(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
-      const json = e.target.result;
-      canvas.loadFromJSON(json, function() {
-        canvas.renderAll();
-        history = [];
-        historyIndex = -1;
-        savedHistoryIndex = -1;
+    reader.onload = function (e) {
+        const json = e.target.result;
+        canvas.loadFromJSON(json, function () {
+            
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Después de cargar, recorremos todos los objetos
+            canvas.getObjects().forEach(obj => {
+                // Si el objeto es un cuadro de texto, le aplicamos los estilos
+                if (obj.type === 'textbox') {
+                    styleAllPlaceholders(obj);
+                }
+            });
+            // --- FIN DE LA MODIFICACIÓN ---
 
-      });
+            canvas.renderAll();
+            history = [];
+            historyIndex = -1;
+            savedHistoryIndex = -1;
+        });
     };
     reader.readAsText(file);
-  }
+}
 
 // Manejo de la carga de imagen
 document.getElementById('input-image').addEventListener('change', function(event) {
@@ -99,7 +109,7 @@ function loadExcel(event) {
     let sheet = workbook.Sheets[workbook.SheetNames[0]];
     dataRows = XLSX.utils.sheet_to_json(sheet);
     alert('Datos de Excel cargados.');
-    populateColumnsMenu();
+    populateColumnSelectors();
   }
 }
 
@@ -146,44 +156,55 @@ function updateFloatingToolbar() {
 dragElement(document.getElementById("floating-toolbar"));
 
 function dragElement(elmnt) {
-  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  if (document.getElementById(elmnt.id + "-header")) {
-    // Si hay un encabezado, lo usamos como el área de arrastre
-    document.getElementById(elmnt.id + "-header").onmousedown = dragMouseDown;
-  } else {
-    // De lo contrario, el área de arrastre es el propio elemento
-    elmnt.onmousedown = dragMouseDown;
-  }
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const header = document.getElementById(elmnt.id + "-header");
+    if (header) {
+        // Si hay un encabezado, lo usamos como el área de arrastre
+        header.onmousedown = dragMouseDown;
+    } else {
+        // De lo contrario, el área de arrastre es el propio elemento
+        elmnt.onmousedown = dragMouseDown;
+    }
 
-  function dragMouseDown(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // Obtener la posición del cursor al inicio del arrastre
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    // Llamar a la función cada vez que el cursor se mueva
-    document.onmousemove = elementDrag;
-  }
+    function dragMouseDown(e) {
+        // --- LA LÍNEA CLAVE DE LA SOLUCIÓN ---
+        // Si el clic se hizo sobre un control interactivo, no hacemos nada y permitimos
+        // que el control funcione normalmente (ej. que el menú se abra).
+        const target = e.target;
+        if (target.tagName === 'SELECT' || target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'OPTION') {
+            return;
+        }
+        // ------------------------------------
 
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // Calcular la nueva posición del cursor
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    // Establecer la nueva posición del elemento
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-  }
+        e = e || window.event;
+        e.preventDefault(); // Esto es lo que causaba el conflicto
+        
+        // Obtener la posición del cursor al inicio del arrastre
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // Llamar a la función cada vez que el cursor se mueva
+        document.onmousemove = elementDrag;
+    }
 
-  function closeDragElement() {
-    // Detener el movimiento cuando se suelta el botón del mouse
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // Calcular la nueva posición del cursor
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // Establecer la nueva posición del elemento
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        // Detener el movimiento cuando se suelta el botón del mouse
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
 }
 
 
@@ -278,28 +299,39 @@ document.getElementById("send-to-back").addEventListener("click", function() {
 
 
 // Evento para insertar el marcador en el texto activo
-document.getElementById("columns-menu").addEventListener("change", function() {
-  const col = this.value;
-  if (!col) return;
-  const placeholder = `{{${col}}}`;
-  const activeObject = canvas.getActiveObject();
-  if (activeObject && activeObject.isEditing) {
-    const cursorPos = activeObject.selectionStart || 0;
-    const currentText = activeObject.text;
-    const newText = currentText.slice(0, cursorPos) + placeholder + currentText.slice(cursorPos);
-    activeObject.text = newText;
-    activeObject.selectionStart = activeObject.selectionEnd = cursorPos + placeholder.length;
-    canvas.renderAll();
-  } else {
-    addText();
-    const newObj = canvas.getActiveObject();
-    if (newObj) {
-      newObj.text = placeholder;
-      newObj.enterEditing();
-      canvas.renderAll();
+document.getElementById("columns-menu").addEventListener("change", function () {
+    const col = this.value;
+    if (!col) return;
+
+    const placeholder = `{{${col}}}`;
+    const activeObject = canvas.getActiveObject();
+
+    if (activeObject && activeObject.isEditing) {
+        const cursorPos = activeObject.selectionStart || 0;
+        const currentText = activeObject.text;
+        const newText = currentText.slice(0, cursorPos) + placeholder + currentText.slice(cursorPos);
+        activeObject.text = newText;
+        
+        // Llamamos a nuestra nueva función para estilizar ESE objeto
+        styleAllPlaceholders(activeObject);
+        
+        activeObject.selectionStart = activeObject.selectionEnd = cursorPos + placeholder.length;
+        activeObject.exitEditing();
+    } else {
+        const newText = new fabric.Textbox(placeholder, {
+            left: 100, top: 100, fontSize: 25, fill: '#0055a5',
+            fontFamily: 'Arial', width: 250, textAlign: 'center'
+        });
+        canvas.add(newText);
+        
+        // Llamamos a nuestra nueva función para estilizar el objeto recién creado
+        styleAllPlaceholders(newText);
+        
+        canvas.setActiveObject(newText);
     }
-  }
-  this.value = "";
+
+    this.value = "";
+    canvas.renderAll();
 });
 
 // Funciones para mostrar/actualizar/ocultar el área de progreso
@@ -327,138 +359,179 @@ function hideProgress() {
   const container = document.getElementById("progress-container");
   container.style.display = "none";
 }
+function styleAllPlaceholders(textObject) {
+    // Estilo que tendrán las etiquetas. ¡Puedes personalizar los colores!
+    const tagStyle = {
+        backgroundColor: 'rgba(0, 0, 0, 1)', // Un azul claro de fondo
+        fill: '#000000ff', // Un azul oscuro para el texto
+    };
 
+    const regex = /\{\{.*?\}\}/g; // Expresión regular para encontrar {{loquesea}}
+    let match;
+
+    // Bucle para encontrar todas las ocurrencias en el texto
+    while ((match = regex.exec(textObject.text)) !== null) {
+        // Aplica el estilo a los caracteres que componen la etiqueta
+        textObject.setSelectionStyles(tagStyle, match.index, match.index + match[0].length);
+    }
+    
+    // Forzamos un re-renderizado para asegurar que los cambios se vean
+    canvas.renderAll();
+}
 
 function generateCertificates() {
-  zip = new JSZip();
-  const totalCertificates = dataRows.length;
-  let qrProcessed = 0;
-  let pdfProcessed = 0;
-  let errorsCount = 0;
-  const processedCertificates = []; // Almacena { canvas, row } de cada certificado procesado
+    zip = new JSZip();
+    fileNameCounts = {}; // Reinicia el contador de nombres de archivo
+    const totalCertificates = dataRows.length;
+    let qrProcessed = 0;
+    let pdfProcessed = 0;
+    let errorsCount = 0;
+    const processedCertificates = [];
 
-  // Fase 1: Generar códigos QR
-  showProgress("qr");
-  let qrPromises = dataRows.map((row, index) => {
-    return new Promise((resolve) => {
-      // Clonar el canvas original
-      let clonedCanvas = new fabric.Canvas(null, { width: 1123, height: 794 });
-      clonedCanvas.loadFromJSON(canvas.toJSON(), function() {
-        // Reemplazar marcadores de texto (excepto el QR)
-        clonedCanvas.getObjects().forEach(obj => {
-          if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && !obj.text.includes('{{qr}}')) {
-            Object.keys(row).forEach(key => {
-              replaceTextWithStyles(obj, `{{${key}}}`, row[key] || '');
+    // Lee la selección del usuario desde los menús desplegables
+    const qrColumn = document.getElementById('qr-column-select').value;
+    const filenameColumn = document.getElementById('filename-column-select').value;
+
+    showProgress("qr");
+    let qrPromises = dataRows.map((row) => {
+        return new Promise((resolve) => {
+            let clonedCanvas = new fabric.Canvas(null, { width: 1123, height: 794 });
+            clonedCanvas.loadFromJSON(canvas.toJSON(), function () {
+                // ... (reemplazo de texto normal) ...
+                clonedCanvas.getObjects().forEach(obj => {
+                    if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && !obj.text.includes('{{qr}}')) {
+                        Object.keys(row).forEach(key => {
+                            replaceTextWithStyles(obj, `{{${key}}}`, row[key] || '');
+                        });
+                    }
+                });
+
+                // Procesar marcador de QR
+                let rowQrPromises = [];
+                clonedCanvas.getObjects().forEach(obj => {
+                    if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && obj.text.includes('{{qr}}')) {
+                        let p = new Promise((resolveRow) => {
+                            // ===== LÓGICA DEL QR CORREGIDA Y CENTRALIZADA =====
+                            // Prioridad 1: Usa la columna seleccionada por el usuario.
+                            // Prioridad 2: Si no, busca la columna 'qr', 'QR', o 'Qr'.
+                            let qrData = qrColumn ? row[qrColumn] : (row['qr'] || row['QR'] || row['Qr']);
+
+                            if (!qrData || qrData.toString().trim() === "") {
+                                console.error("No se proporcionó información para el QR en la fila:", row);
+                                clonedCanvas.remove(obj); // Opcional: elimina el placeholder si no hay dato
+                                return resolveRow();
+                            }
+                            
+                            let fontSize = obj.fontSize || 30;
+                            let qrWidth = fontSize * 5;
+                            QRCode.toCanvas(qrData, { width: qrWidth, margin: 2 }, function (err, canvasQR) {
+                                if (err) {
+                                    console.error("Error generando QR:", err);
+                                    resolveRow();
+                                } else {
+                                    const url = canvasQR.toDataURL();
+                                    fabric.Image.fromURL(url, function (img) {
+                                        img.set({ left: obj.left, top: obj.top, angle: obj.angle, scaleX: 1, scaleY: 1 });
+                                        clonedCanvas.remove(obj);
+                                        clonedCanvas.add(img);
+                                        resolveRow();
+                                    });
+                                }
+                            });
+                        });
+                        rowQrPromises.push(p);
+                    }
+                });
+
+                Promise.all(rowQrPromises).then(() => {
+                    clonedCanvas.renderAll();
+                    qrProcessed++;
+                    updateProgress(qrProcessed, totalCertificates);
+                    processedCertificates.push({ canvas: clonedCanvas, row: row });
+                    resolve();
+                });
             });
-          }
         });
+    });
 
-        // Procesar objetos que contienen el marcador {{qr}}
-        let rowQrPromises = [];
-        clonedCanvas.getObjects().forEach(obj => {
-          if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && obj.text.includes('{{qr}}')) {
-            let p = new Promise((resolveRow) => {
-              let qrData = row['qr'] || row['QR'] || row['Qr'];
-              if (!qrData || qrData.toString().trim() === "") {
-                console.error("No se proporcionó información válida para el QR en la fila:", row);
-                return resolveRow();
-              }
-              let fontSize = obj.fontSize || 30;
-              let qrWidth = fontSize * 5;
-              // Usando QRCode.toCanvas de QRCode.js para generar el QR
-              QRCode.toCanvas(qrData, { width: qrWidth, margin: 2 }, function(err, canvasQR) {
-                if (err) {
-                  console.error("Error generando QR:", err);
-                  resolveRow();
-                } else {
-                  const url = canvasQR.toDataURL();
-                  fabric.Image.fromURL(url, function(img) {
-                    img.set({
-                      left: obj.left,
-                      top: obj.top,
-                      angle: obj.angle,
-                      scaleX: 1,
-                      scaleY: 1
-                    });
-                    clonedCanvas.remove(obj);
-                    clonedCanvas.add(img);
-                    resolveRow();
-                  });
-                }
-              });
+    Promise.all(qrPromises).then(() => {
+        showProgress("pdf");
+        let pdfPromises = processedCertificates.map((cert, index) => {
+            return new Promise((resolve) => {
+                let uniqueFileName = generateUniqueFileName(cert.row, index, filenameColumn);
+                exportToPDF(cert.canvas, uniqueFileName, function (success) {
+                    pdfProcessed++;
+                    updateProgress(pdfProcessed, totalCertificates);
+                    if (!success) errorsCount++;
+                    resolve();
+                });
             });
-            rowQrPromises.push(p);
-          }
         });
-        Promise.all(rowQrPromises).then(() => {
-          clonedCanvas.renderAll();
-          qrProcessed++;
-          updateProgress(qrProcessed, totalCertificates);
-          processedCertificates.push({ canvas: clonedCanvas, row: row });
-          resolve();
-        });
-      });
-    });
-  });
 
-  Promise.all(qrPromises).then(() => {
-    // Fase 1 completada: pasar a la Fase 2 (Generando PDFs)
-    showProgress("pdf");  // Actualiza el texto del área de progreso
-    let pdfPromises = processedCertificates.map((cert, index) => {
-      return new Promise((resolve) => {
-        // Genera un nombre único basado en la fila y el índice
-        let uniqueFileName = generateUniqueFileName(cert.row, index);
-        exportToPDF(cert.canvas, uniqueFileName, function(success) {
-          pdfProcessed++;
-          updateProgress(pdfProcessed, totalCertificates);
-          if (!success) {
-            errorsCount++;
-          }
-          resolve();
+        Promise.all(pdfPromises).then(() => {
+            hideProgress();
+            if (errorsCount === 0) {
+                alert("Certificados generados exitosamente.");
+            } else {
+                alert(`Se generaron certificados con ${errorsCount} error(es).`);
+            }
         });
-      });
     });
-    Promise.all(pdfPromises).then(() => {
-      hideProgress();
-      if (errorsCount === 0) {
-        alert("Certificados generados exitosamente.");
-      } else {
-        alert(`Se generaron certificados con ${errorsCount} error(es).`);
-      }
-    });
-  });
 }
 
-function generateUniqueFileName(row, index) {
-  // Obtiene el nombre de la fila utilizando diferentes claves posibles
-  let name = row['nombre'] || row['nombres'] || row['NOMBRE'] || row['NOMBRES'] || `certificado_${index}`;
-  // Reemplaza espacios por guiones bajos
-  let baseName = name.replace(/\s+/g, '_');
-  
-  // Si el nombre base aún no se ha usado, se registra y se retorna tal cual.
-  if (!fileNameCounts[baseName]) {
-    fileNameCounts[baseName] = 1;
-    return baseName;
-  } else {
-    // Si ya se usó, se le agrega un contador entre paréntesis
-    let count = fileNameCounts[baseName];
-    fileNameCounts[baseName] = count + 1;
-    return baseName + `(${count})`;
-  }
+function generateUniqueFileName(row, index, selectedColumn) {
+    let name = '';
+
+    // PRIORIDAD 1: Usar la columna que el usuario seleccionó en el menú.
+    // Se comprueba que 'selectedColumn' no sea una cadena vacía y que exista en la fila.
+    if (selectedColumn && row[selectedColumn] && String(row[selectedColumn]).trim() !== '') {
+        name = String(row[selectedColumn]);
+        console.log(`Fila ${index}: Usando nombre de columna seleccionada '${selectedColumn}': ${name}`);
+    }
+    // PRIORIDAD 2: Si no se seleccionó nada, buscar columnas por defecto.
+    else if (row['nombre'] || row['nombres'] || row['NOMBRE'] || row['NOMBRES']) {
+        name = row['nombre'] || row['nombres'] || row['NOMBRE'] || row['NOMBRES'];
+        console.log(`Fila ${index}: Usando nombre de columna por defecto: ${name}`);
+    }
+
+    // ÚLTIMO RECURSO: Si todo lo anterior falla, usar un nombre genérico.
+    if (name.trim() === '') {
+        name = `certificado_${index + 1}`;
+        // console.log(`Fila ${index}: Usando nombre genérico: ${name}`);
+    }
+
+    // Lógica para evitar nombres de archivo duplicados (esta parte ya funcionaba bien)
+    const baseName = String(name).replace(/\s+/g, '_');
+    if (!fileNameCounts[baseName]) {
+        fileNameCounts[baseName] = 1;
+        return baseName;
+    } else {
+        const count = fileNameCounts[baseName];
+        fileNameCounts[baseName]++;
+        return `${baseName}(${count})`;
+    }
 }
 
+function populateColumnSelectors() {
+  const columnsMenu = document.getElementById("columns-menu");
+  const qrColumnSelect = document.getElementById("qr-column-select");
+  const filenameColumnSelect = document.getElementById("filename-column-select");
 
-function populateColumnsMenu() {
-  const menu = document.getElementById("columns-menu");
-  // Limpiar el menú
-  menu.innerHTML = '<option value="">Datos</option>';
+  // Limpiar los menús antes de llenarlos
+  columnsMenu.innerHTML = '<option value="">Insertar Campo</option>';
+  qrColumnSelect.innerHTML = "<option value=''>Por defecto (qr)</option>";
+  filenameColumnSelect.innerHTML = "<option value=''>Por defecto (nombre)</option>";
+
   if (dataRows.length > 0) {
     const columns = Object.keys(dataRows[0]);
     columns.forEach(col => {
       const option = document.createElement("option");
       option.value = col;
       option.text = col;
-      menu.appendChild(option);
+      // Clona la opción para cada menú
+      columnsMenu.appendChild(option.cloneNode(true));
+      qrColumnSelect.appendChild(option.cloneNode(true));
+      filenameColumnSelect.appendChild(option.cloneNode(true));
     });
   }
 }
@@ -515,6 +588,69 @@ function deleteSelected() {
     canvas.discardActiveObject(); // limpia la selección
     canvas.renderAll();
   }
+}
+
+function exportSinglePDF() {
+    console.log("Iniciando exportación de PDF único...");
+
+    const canvasObjects = canvas.getObjects();
+    const hasPlaceholders = canvasObjects.some(obj => obj.type === 'textbox' && obj.text.includes('{{'));
+    
+    if (hasPlaceholders) {
+        if (!confirm("Hemos detectado marcadores de posición (ej. {{nombres}}) en tu diseño. Se exportarán tal como se ven. ¿Deseas continuar?")) {
+            console.log("Exportación cancelada por el usuario.");
+            return;
+        }
+    }
+    
+    try {
+        // Genera el SVG como texto (esto es correcto)
+        const svgString = canvas.toSVG();
+
+        // ===== EL PASO CLAVE QUE FALTABA =====
+        // 1. Crear un intérprete (parser)
+        const parser = new DOMParser();
+        // 2. Interpretar el texto SVG para crear un documento SVG
+        const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
+        // 3. Obtener el elemento raíz <svg> del documento
+        const svgElement = svgDoc.documentElement;
+        // =====================================
+
+        const pdf = new window.jspdf.jsPDF('l', 'px', [canvas.width, canvas.height]);
+        
+        // Ahora le pasamos el ELEMENTO SVG, no el texto
+        pdf.svg(svgElement, {
+            x: 0,
+            y: 0,
+            width: canvas.width,
+            height: canvas.height
+        }).then(() => {
+            pdf.save('Certificado.pdf');
+            console.log("PDF único generado y descargado.");
+        }).catch((error) => {
+            console.error("Error al renderizar el SVG en el PDF:", error);
+            alert("Hubo un error al generar el PDF. Revisa la consola para más detalles.");
+        });
+
+    } catch (error) {
+        console.error("Error general al exportar PDF único:", error);
+        alert("Hubo un error al generar el PDF. Revisa la consola para más detalles.");
+    }
+}
+
+function addQrPlaceholder() {
+    const qrPlaceholder = new fabric.Textbox('{{qr}}', {
+        left: 150,
+        top: 150,
+        fontSize: 15,
+        fill: '#ff5100ff', // Un color distintivo para que se note que es un placeholder
+        fontFamily: 'Arial',
+        width: 100,
+        textAlign: 'center',
+        // Propiedad personalizada para identificarlo si fuera necesario (opcional)
+        isQrPlaceholder: true 
+    });
+    canvas.add(qrPlaceholder);
 }
 
 
@@ -584,78 +720,66 @@ function saveTemplate() {
   }
 
 function generatePreview() {
-    
-    //if (dataRows.length === 0) {
-    //  alert("Primero carga el archivo Excel para obtener los datos.");
-    //  return;
-    //}
-  
-    // Tomamos la primera fila de datos
+    if (dataRows.length === 0) return;
     const row = dataRows[0];
-  
-    // Creamos o limpiamos el canvas de vista previa
-    const previewCanvasElement = document.getElementById('preview-canvas');
-    // Si ya se ha inicializado un canvas de Fabric para la vista previa, lo destruimos
+    if (!row) return;
+
     if (window.previewFabricCanvas) {
-      window.previewFabricCanvas.dispose();
+        window.previewFabricCanvas.dispose();
     }
-    // Creamos el canvas Fabric a partir del elemento existente
     window.previewFabricCanvas = new fabric.Canvas('preview-canvas', { width: 1123, height: 794 });
-  
-    // Cargamos la configuración del canvas editable en el canvas de vista previa
-    window.previewFabricCanvas.loadFromJSON(canvas.toJSON(), function() {
-      let qrPromises = [];
-      // Recorremos todos los objetos del canvas de vista previa
-      window.previewFabricCanvas.getObjects().forEach(obj => {
-        // Reemplazar marcadores de texto (excepto QR)
-        if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && !obj.text.includes('{{qr}}')) {
-          Object.keys(row).forEach(key => {
-            // Usa la función que reemplaza conservando estilos (ya definida en tu código)
-            replaceTextWithStyles(obj, `{{${key}}}`, row[key] || '');
-          });
-        }
-  
-        // Procesar el marcador de QR si existe
-        if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && obj.text.includes('{{qr}}')) {
-          let p = new Promise((resolve, reject) => {
-            let qrData = row['qr'];
-            if (!qrData || qrData.toString().trim() === "") {
-              console.error("No se proporcionó información válida para el QR en la fila:", row);
-              return resolve();
-            }
-            let fontSize = obj.fontSize || 30; // Usamos 30 como valor por defecto si no existe
-            let qrWidth = fontSize * 5;
-            // Generar el QR con tamaño predefinido y sin margen
-            QRCode.toDataURL(qrData, { errorCorrectionLevel: 'H', width: qrWidth, margin: 0 }, function(err, url) {
-              if (err) {
-                console.error("Error generando QR:", err);
-                resolve();
-              } else {
-                fabric.Image.fromURL(url, function(img) {
-                  img.set({
-                    left: obj.left,
-                    top: obj.top,
-                    angle: obj.angle,
-                    scaleX: 1,
-                    scaleY: 1
-                  });
-                  window.previewFabricCanvas.remove(obj);
-                  window.previewFabricCanvas.add(img);
-                  resolve();
+
+    window.previewFabricCanvas.loadFromJSON(canvas.toJSON(), function () {
+        let qrPromises = [];
+        
+        // ===== LÓGICA DE VISTA PREVIA CORREGIDA =====
+        const qrColumn = document.getElementById('qr-column-select').value; // Lee la selección del usuario
+
+        window.previewFabricCanvas.getObjects().forEach(obj => {
+            // Reemplazar marcadores de texto (excepto QR)
+            if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && !obj.text.includes('{{qr}}')) {
+                Object.keys(row).forEach(key => {
+                    replaceTextWithStyles(obj, `{{${key}}}`, row[key] || '');
                 });
-              }
-            });
-          });
-          qrPromises.push(p);
-        }
-      });
-  
-      // Una vez procesados los posibles QR, se renderiza el canvas de vista previa
-      Promise.all(qrPromises).then(() => {
-        window.previewFabricCanvas.renderAll();
-      });
+            }
+
+            // Procesar el marcador de QR si existe
+            if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && obj.text.includes('{{qr}}')) {
+                let p = new Promise((resolve) => {
+                    // USA LA MISMA LÓGICA QUE LA GENERACIÓN FINAL
+                    let qrData = qrColumn ? row[qrColumn] : (row['qr'] || row['QR'] || row['Qr']);
+
+                    if (!qrData || qrData.toString().trim() === "") {
+                        console.error("Vista Previa: No hay dato para el QR.");
+                        window.previewFabricCanvas.remove(obj);
+                        return resolve();
+                    }
+                    
+                    let fontSize = obj.fontSize || 30;
+                    let qrWidth = fontSize * 5;
+                    QRCode.toDataURL(qrData, { errorCorrectionLevel: 'H', width: qrWidth, margin: 0 }, function (err, url) {
+                        if (err) {
+                            console.error("Error en QR de vista previa:", err);
+                            resolve();
+                        } else {
+                            fabric.Image.fromURL(url, function (img) {
+                                img.set({ left: obj.left, top: obj.top, angle: obj.angle });
+                                window.previewFabricCanvas.remove(obj);
+                                window.previewFabricCanvas.add(img);
+                                resolve();
+                            });
+                        }
+                    });
+                });
+                qrPromises.push(p);
+            }
+        });
+
+        Promise.all(qrPromises).then(() => {
+            window.previewFabricCanvas.renderAll();
+        });
     });
-  }
+}
 
 // Al final de qr.js, después de definir generatePreview():
 function undo() {
